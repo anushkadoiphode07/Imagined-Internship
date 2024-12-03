@@ -1,0 +1,34 @@
+# Node modules
+/node_modules/
+
+# TypeScript build output
+/dist/
+/build/
+
+# IDE or editor configurations
+.vscode/
+.idea/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variable files
+.env
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Coverage folder from test runs
+/coverage/
+
+# TypeScript specific
+*.tsbuildinfo
+
+# Optional: Ignore local storage for MongoDB (if you're using a local instance for testing)
+/data/
+
+# Ignore the lock file if you use yarn instead of npm
+yarn.lock
