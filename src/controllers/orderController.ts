@@ -132,3 +132,55 @@ export const updateOrder = async (req: Request, res: Response): Promise<void> =>
     }
   }
 };
+
+// Get Orders Placed in the Last 7 Days
+export const getOrdersLast7Days = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const currentDate = new Date();
+      const sevenDaysAgo = new Date(currentDate.setDate(currentDate.getDate() - 7));
+  
+      const orders = await Order.find({ createdAt: { $gte: sevenDaysAgo } }).populate(populateOptions);
+  
+      if (orders.length === 0) {
+        res.status(404).json({ message: "No orders found in the last 7 days" });
+        return;
+      }
+  
+      res.status(200).json(orders);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ error: error.message });
+      } else {
+        res.status(400).json({ error: "An unknown error occurred" });
+      }
+    }
+  };
+  
+  // Get Orders for a Specific User
+  export const getOrdersByUser = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { userId } = req.params;
+  
+      // Validate user ID
+      if (!mongoose.Types.ObjectId.isValid(userId)) {
+        res.status(400).json({ error: "Invalid user ID" });
+        return;
+      }
+  
+      // Fetch user's orders
+      const orders = await Order.find({ user: userId }).populate(populateOptions);
+  
+      if (orders.length === 0) {
+        res.status(404).json({ message: "No orders found for this user" });
+        return;
+      }
+  
+      res.status(200).json(orders);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ error: error.message });
+      } else {
+        res.status(400).json({ error: "An unknown error occurred" });
+      }
+    }
+};
