@@ -63,3 +63,32 @@ export const updateProduct = async (req: Request, res: Response): Promise<void> 
     }
   }
 };
+
+// Get total stock quantity
+
+export const getTotalStockQuantity = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Aggregate the total stock quantity from all products
+    const totalStock = await Product.aggregate([
+      {
+        $group: {
+          _id: null, // We don't need to group by any field
+          totalStock: { $sum: "$stockQuantity" }, // Sum up the stockQuantity field
+        },
+      },
+    ]);
+
+    if (!totalStock.length) {
+      res.status(404).json({ message: "No products found" });
+      return;
+    }
+
+    res.status(200).json({ totalStock: totalStock[0].totalStock });
+  } catch (error) {
+    if (error instanceof Error) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(400).json({ error: "An unknown error occurred" });
+    }
+  }
+};

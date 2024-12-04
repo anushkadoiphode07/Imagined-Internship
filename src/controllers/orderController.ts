@@ -184,3 +184,43 @@ export const getOrdersLast7Days = async (req: Request, res: Response): Promise<v
       }
     }
 };
+
+// Get User by Product
+export const getUsersByProduct = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { productId } = req.params;
+  
+      // Validate MongoDB ObjectId for the product
+      if (!mongoose.Types.ObjectId.isValid(productId)) {
+        res.status(400).json({ error: "Invalid product ID" });
+        return;
+      }
+  
+      // Find all orders that contain the specific product
+      const orders = await Order.find({ "products.product": productId })
+        .populate("user", "name email")  // Populate user details like name and email
+        .populate("products.product", "name price");  // Populate product details like name and price
+  
+      // Check if any orders contain the specified product
+      if (orders.length === 0) {
+        res.status(404).json({ message: "No users found who bought this product" });
+        return;
+      }
+  
+      // Extract unique users who bought this product
+      const users = orders.map(order => order.user).filter((user, index, self) =>
+        index === self.findIndex((t) => (
+          t._id.toString() === user._id.toString()
+        ))
+      );
+  
+      res.status(200).json(users);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ error: error.message });
+      } else {
+        res.status(400).json({ error: "An unknown error occurred" });
+      }
+    }
+};
+  
