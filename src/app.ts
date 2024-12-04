@@ -6,6 +6,7 @@ import cors from "cors";
 
 import userRoutes from "./routes/userRoutes";
 import productRoutes from "./routes/productRoutes";
+import orderRoutes from "./routes/orderRoutes";
 
 dotenv.config();
 
@@ -16,6 +17,7 @@ app.use(bodyParser.json());
 
 app.use("/users", userRoutes);
 app.use("/products", productRoutes);
+app.use("/orders", orderRoutes);
 
 mongoose.connect(process.env.MONGO_URI!)
   .then(() => console.log("Connected to MongoDB"))
