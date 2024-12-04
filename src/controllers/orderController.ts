@@ -28,3 +28,34 @@ export const getOrders = async (req: Request, res: Response) => {
     }
   }
 };
+
+export const updateOrder = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+  
+      // Validate MongoDB ObjectId
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json({ error: "Invalid order ID" });
+        return;
+      }
+  
+      // Perform the update
+      const updatedOrder = await Order.findByIdAndUpdate(id, req.body, {
+        new: true,
+        runValidators: true,
+      });
+  
+      if (!updatedOrder) {
+        res.status(404).json({ error: "Order not found" });
+        return;
+      }
+  
+      res.status(200).json(updatedOrder);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ error: error.message });
+      } else {
+        res.status(400).json({ error: "An unknown error occurred" });
+      }
+    }
+};
