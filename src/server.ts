@@ -1,3 +1,7 @@
 import app from "./app";
 
-export default app; // Export for Vercel
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
