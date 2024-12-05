@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { Product } from "../models/product";
 import mongoose from "mongoose";
-import { Order } from '../models/order';
 
 // Create Product
 export const createProduct = async (req: Request, res: Response): Promise<void> => {
@@ -64,8 +63,7 @@ export const updateProduct = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-// Get total stock quantity
-
+// Get Total Stock quantity
 export const getTotalStockQuantity = async (req: Request, res: Response): Promise<void> => {
   try {
     // Aggregate the total stock quantity from all products

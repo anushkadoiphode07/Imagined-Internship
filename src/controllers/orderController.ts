@@ -135,92 +135,93 @@ export const updateOrder = async (req: Request, res: Response): Promise<void> =>
 
 // Get Orders Placed in the Last 7 Days
 export const getOrdersLast7Days = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const currentDate = new Date();
-      const sevenDaysAgo = new Date(currentDate.setDate(currentDate.getDate() - 7));
-  
-      const orders = await Order.find({ createdAt: { $gte: sevenDaysAgo } }).populate(populateOptions);
-  
-      if (orders.length === 0) {
-        res.status(404).json({ message: "No orders found in the last 7 days" });
-        return;
-      }
-  
-      res.status(200).json(orders);
-    } catch (error) {
-      if (error instanceof Error) {
-        res.status(400).json({ error: error.message });
-      } else {
-        res.status(400).json({ error: "An unknown error occurred" });
-      }
+  try {
+    const currentDate = new Date();
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(currentDate.getDate() - 7);
+
+    // Query using the createdAt index
+    const orders = await Order.find({ orderDate: { $gte: sevenDaysAgo } })
+      .populate([
+        { path: "user", select: "name email" },
+        { path: "products.product", select: "name category price" },
+      ])
+      .lean(); // Use lean for better performance
+
+    if (orders.length === 0) {
+      res.status(404).json({ message: "No orders found in the last 7 days" });
+      return;
     }
-  };
-  
-  // Get Orders for a Specific User
-  export const getOrdersByUser = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { userId } = req.params;
-  
-      // Validate user ID
-      if (!mongoose.Types.ObjectId.isValid(userId)) {
-        res.status(400).json({ error: "Invalid user ID" });
-        return;
-      }
-  
-      // Fetch user's orders
-      const orders = await Order.find({ user: userId }).populate(populateOptions);
-  
-      if (orders.length === 0) {
-        res.status(404).json({ message: "No orders found for this user" });
-        return;
-      }
-  
-      res.status(200).json(orders);
-    } catch (error) {
-      if (error instanceof Error) {
-        res.status(400).json({ error: error.message });
-      } else {
-        res.status(400).json({ error: "An unknown error occurred" });
-      }
+
+    res.status(200).json(orders);
+  } catch (error) {
+    if (error instanceof Error) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(400).json({ error: "An unknown error occurred" });
     }
+  }
+};
+
+// Get Orders for a Specific User
+export const getOrdersByUser = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.params;
+
+    // Validate user ID
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      res.status(400).json({ error: "Invalid user ID" });
+      return;
+    }
+
+    // Fetch user's orders
+    const orders = await Order.find({ user: userId }).populate(populateOptions);
+
+    if (orders.length === 0) {
+      res.status(404).json({ message: "No orders found for this user" });
+      return;
+    }
+
+    res.status(200).json(orders);
+  } catch (error) {
+    if (error instanceof Error) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(400).json({ error: "An unknown error occurred" });
+    }
+  }
 };
 
 // Get User by Product
 export const getUsersByProduct = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { productId } = req.params;
-  
-      // Validate MongoDB ObjectId for the product
-      if (!mongoose.Types.ObjectId.isValid(productId)) {
-        res.status(400).json({ error: "Invalid product ID" });
-        return;
-      }
-  
-      // Find all orders that contain the specific product
-      const orders = await Order.find({ "products.product": productId })
-        .populate("user", "name email")  // Populate user details like name and email
-        .populate("products.product", "name price");  // Populate product details like name and price
-  
-      // Check if any orders contain the specified product
-      if (orders.length === 0) {
-        res.status(404).json({ message: "No users found who bought this product" });
-        return;
-      }
-  
-      // Extract unique users who bought this product
-      const users = orders.map(order => order.user).filter((user, index, self) =>
-        index === self.findIndex((t) => (
-          t._id.toString() === user._id.toString()
-        ))
-      );
-  
-      res.status(200).json(users);
-    } catch (error) {
-      if (error instanceof Error) {
-        res.status(400).json({ error: error.message });
-      } else {
-        res.status(400).json({ error: "An unknown error occurred" });
-      }
+  try {
+    const { productId } = req.params;
+
+    // Validate MongoDB ObjectId for the product
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      res.status(400).json({ error: "Invalid product ID" });
+      return;
     }
+
+    // Use index for filtering by products.product
+    const orders = await Order.find({ "products.product": productId })
+      .populate("user", "name email")
+      .lean();
+
+    if (orders.length === 0) {
+      res.status(404).json({ message: "No users found who bought this product" });
+      return;
+    }
+
+    const uniqueUsers = Array.from(new Set(orders.map((order) => JSON.stringify(order.user))))
+      .map((user) => JSON.parse(user));
+
+    res.status(200).json(uniqueUsers);
+  } catch (error) {
+    if (error instanceof Error) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(400).json({ error: "An unknown error occurred" });
+    }
+  }
 };
-  
